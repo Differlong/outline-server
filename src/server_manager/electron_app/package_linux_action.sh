@@ -29,9 +29,12 @@ for arch in ia32 x64; do
   $ROOT_DIR/src/server_manager/node_modules/.bin/electron-builder \
     --projectDir=build/server_manager/electron_app/static \
     --publish=never \
+    --config.publish.provider=generic \
+    --config.publish.url=http://localhost:8000/ \
     --$arch \
     --linux deb rpm tar.gz \
     --config.linux.icon=icons/png \
     --config.linux.category=Network \
     --config.artifactName='Outline-Manager-'${arch}'.${ext}'
+
 done

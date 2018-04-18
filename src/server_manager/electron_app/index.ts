@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as electron from 'electron';
+import {autoUpdater} from 'electron-updater';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
@@ -57,6 +58,46 @@ app.on('ready', () => {
   mainWindow = createMainWindow();
 });
 
+const UPDATE_DOWNLOADED_EVENT = 'update-downloaded';
+autoUpdater.on(UPDATE_DOWNLOADED_EVENT, (ev, info) => {
+  showDialog(`update downloaded!`);
+  if (!!mainWindow) {
+    mainWindow.webContents.send(UPDATE_DOWNLOADED_EVENT);
+  }
+});
+
+// autoUpdater.on('checking-for-update', () => {
+//   console.log('checking for updates');
+//   showDialog('checking-for-update');
+// });
+
+// autoUpdater.on('update-available', (info) => {
+//   showDialog(`update-available`);
+//   console.log('update-available');
+// });
+
+// autoUpdater.on('update-not-available', (info) => {
+//   showDialog('update-not-available');
+//   console.log('update-not-available');
+// });
+
+// autoUpdater.on('download-progress', (info) => {
+//   showDialog(`download-progress ${info.percent}`);
+// });
+
+autoUpdater.on('error', (error) => {
+  showDialog(`update-error ${error.message}`);
+});
+
+// TODO(alalama): delete!
+function showDialog(msg: string) {
+  electron.dialog.showMessageBox({message: msg, buttons: ['OK']}, (clickedButtonIndex: number) => {
+    if (clickedButtonIndex === 0) {
+      console.log('User ACK');
+    }
+  });
+}
+
 // Set of fingerprints.  All values are true.
 const trustedFingerprints = new Set<string>();
 
@@ -84,6 +125,12 @@ ipcMain.on('bring-to-front', (event: IpcEvent) => {
     mainWindow.restore();
   }
   mainWindow.focus();
+});
+
+ipcMain.on('app-ui-ready', () => {
+  // Check for updates after the UI is loaded; otherwise the UI may miss the
+  //'update-downloaded' event.
+  autoUpdater.checkForUpdates();
 });
 
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
@@ -229,4 +276,4 @@ if (app.setAboutPanelOptions) {
   });
 }
 
-checkForUpdates(config.version, config.releaseDataUrl);
+// checkForUpdates(config.version, config.releaseDataUrl);
